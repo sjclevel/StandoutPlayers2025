@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MLB Fan Favorites 2025</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+<h1>MLB Fan Favorites 2025</h1>
+
+<form method="POST" id="playerForm">
+  <label for="player_name">Enter Player Name:</label>
+  <input type="text" name="player_name" id="player_name" onkeyup="filterPlayers(this.value)">
+  <button type="submit">Add Player</button>
+</form>
+
+<div class="loader" id="addPlayerLoader" style="display: none; margin: 20px auto;"></div>  {# Loader #}
+
+  <h2>Favorite Players:</h2>
+  <ul>
+    {% for player in favorite_players %}
+      <li>
+        <div class="player-item">
+          <div class="vote-section">
+            <a href="{{ url_for('vote', player_id=player.id) }}" class="vote-button">Vote</a>
+          </div>
+          <div class="player-info">
+            {{ player.name }} #{{ player.primaryNumber }}  
+            <span class="team-info">{{ player.team }}, {{ player.position }}</span> <br> 
+            <a href="#" onclick="loadVideo('{{ player.id }}', '{{ player.name }}')" class="sentiment-link">Home Run Video</a>
+            <a href="#" onclick="loadStats('{{ player.id }}', '{{ player.name }}')" class="sentiment-link">Stats</a>
+          </div>
+          <div class="vote-count">
+            {{ player.votes }} votes
+          </div>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+
+{% if error %}
+  <p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<div id="sentimentModal" class="modal">
+  <div class="modal-content" id="sentimentModalContent">
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='scripts.js') }}"></script>
+<script>
+  // ... (Your existing JavaScript for the modal) ...
+
+  // Add this function to handle form submission and show the loader
+  document.getElementById('playerForm').addEventListener('submit', function() {
+    document.getElementById('addPlayerLoader').style.display = 'block';
+    // Allow the form to submit naturally
+  });
+</script>
+
+</body>
+</html>

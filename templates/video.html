@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home Run Video - {{ player_name }}</title>
+    <script>
+        const playerId = "{{ player_id }}";
+        const video_index = {{ video_index }};
+    </script>
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        .video-container {
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        video {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .error-message {
+            color: #D50032;
+            background: #fff;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid #D50032;
+            margin: 20px auto;
+            max-width: 600px;
+            display: none;
+        }
+        .button-container {
+            margin: 20px 0;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+        .back-button, .next-button {
+            display: inline-block;
+            padding: 10px 20px;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .back-button {
+            background-color: #002D72;
+        }
+        .next-button {
+            background-color: #4CAF50;
+        }
+        .loader {
+          width: 100%;
+          height: 4.8px;
+          display: inline-block;
+          background: #f0f0f0;
+          position: relative;
+          overflow: hidden;
+        }
+        .loader::after {
+          content: '';  
+          width: 40%;
+          height: 4.8px;
+          background-color: #002D72;
+          position: absolute;
+          top: 0;
+          left: -40%;
+          box-sizing: border-box;
+          border-radius: 2px;
+          -webkit-animation: loading 1s infinite linear;
+          animation: loading 1s infinite linear;
+        }
+        @-webkit-keyframes loading {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(350%); }
+        }
+        @keyframes loading {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(350%); }
+        }
+
+        @keyframes barStripe {
+          0% {
+            background-position: 1em 0;
+          }
+          100% {
+            background-position: 0 0;
+          }
+        }
+
+        @keyframes animFw {
+          0% {
+            width: 0;
+          }
+          100% {
+            width: 100%;
+          }
+        }
+
+
+        /* .loader {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #4CAF50;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        } */
+        .player-details-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .player-image {
+            text-align: center;
+        }
+        .player-headshot {
+            width: 170px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .player-info {
+            color: #666;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+        .homer-details {
+            padding: 20px;
+        }
+        .stats {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-label {
+            font-weight: bold;
+            color: #002D72;
+        }
+        .stat-value {
+            color: #D50032;
+            font-weight: bold;
+        }
+        .analysis-container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .debug-info {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+        .debug-info pre {
+            background-color: #f0f0f0;
+            padding: 10px;
+            overflow-x: auto;
+        }
+        .metrics-section, .comparison-section {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .metric-item, .comparison-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+        .metric-label, .comparison-label {
+            font-weight: bold;
+            color: #002D72;
+        }
+        .metric-value, .comparison-value {
+            color: #D50032;
+        }
+        .analysis-content {
+            display: block;
+            text-align: left;
+            line-height: 1.6;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .analysis-content ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .analysis-content li {
+            margin-bottom: 1.5em;
+        }
+        .metric-highlight {
+            color: #D50032;
+            font-weight: bold;
+        }
+        .analysis-content strong {
+            color: #002D72;
+            font-weight: 600;
+        }
+        /* Handle markdown-style formatting */
+        .analysis-content {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .analysis-content p {
+            margin-bottom: 1em;
+        }
+
+    </style>
+</head>
+<body>
+    <h1>Home Run Videos for {{ player_name }}</h1>
+
+    <div class="loader-container" id="videoLoader">
+        <div class="loader"></div>
+    </div>
+
+    {% if home_runs %}
+    {% set homer = home_runs[video_index] %}
+    <div class="video-container" style="display: none;">
+        <h3>{{ homer.title }}</h3>
+        <video width="640" height="360" controls autoplay playsinline loop muted
+               onloadeddata="onVideoLoaded()" 
+               onerror="onVideoError()"
+               poster="{{ homer.video }}?seek=1">
+            <source src="{{ homer.video }}" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+        <div class="loader" id="nextVideoLoader" style="display: none; margin: 20px auto;"></div>
+        <div class="player-details-container">
+            <div class="player-image">
+                <img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/{{ player_id }}/headshot/67/current" alt="{{ player_name }}" class="player-headshot">
+                <h3>{{ player_name }} #{{ player.primaryNumber }}</h3>
+                <div class="player-info">{{ player.team }}, {{ player.position }}</div>
+            </div>
+            <div class="homer-details">
+                <h3>Home Run Details</h3>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Exit Velocity</span>
+                        <span class="stat-value">{{ homer.ExitVelocity }} mph</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Distance</span>
+                        <span class="stat-value">{{ "%.1f"|format(homer.HitDistance|float) }} feet</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Launch Angle</span>
+                        <span class="stat-value">{{ homer.LaunchAngle }}°</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Season</span>
+                        <span class="stat-value">{{ homer.get('season_year', '2024') }}</span>
+                    </div>
+                    {% if homer.is_inside_park %}
+                    <div class="stat-item">
+                        <span class="stat-label">Notable</span>
+                        <span class="stat-value">Inside-the-Park Home Run!</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="error-message" id="error-message">
+            Unable to load video. The video may no longer be available.
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="analysis-container">
+        <h2>AI Analysis</h2>
+        <div id="analysisLoader" class="loader"></div>
+        <div id="analysisContent" class="analysis-content" style="display: none;"></div>
+    </div>
+    <script>
+        // Fetch analysis independently after page loads
+        function fetchAnalysis() {
+            const playerId = "{{ player_id }}";
+            const videoIndex = {{ video_index }};
+            fetch(`/api/analysis/${playerId}/${videoIndex}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('analysisLoader').style.display = 'none';
+                    const content = document.getElementById('analysisContent');
+                    content.innerHTML = data.html;
+                    content.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error loading analysis:', error);
+                    document.getElementById('analysisLoader').style.display = 'none';
+                    document.getElementById('analysisContent').innerHTML = '<p>Error loading analysis</p>';
+                    document.getElementById('analysisContent').style.display = 'block';
+                });
+        }
+
+        // Start fetching analysis after page loads
+        window.addEventListener('load', fetchAnalysis);
+        // Fetch analysis after page loads
+        window.addEventListener('load', function() {
+            fetch(`/api/analysis/${playerId}/${video_index}`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('analysisLoader').style.display = 'none';
+                    const content = document.getElementById('analysisContent');
+                    content.innerHTML = data.html;
+                    content.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error loading analysis:', error);
+                    document.getElementById('analysisLoader').style.display = 'none';
+                    document.getElementById('analysisContent').innerHTML = '<p>Error loading analysis</p>';
+                    document.getElementById('analysisContent').style.display = 'block';
+                });
+        });
+    </script>
+        {% if debug_info %}
+            <div class="debug-info">
+                <h3>Vision AI Debug Output</h3>
+                <pre>{{ debug_info | safe }}</pre>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="button-container">
+        {% if video_index + 1 < home_runs|length %}
+            <a href="#" onclick="loadNextVideo('{{ player_id }}', {{ video_index + 1 }})" class="next-button">Watch Next Home Run</a>
+        {% endif %}
+        <a href="/" class="back-button">Back to Home</a>
+    </div>
+
+
+    <script>
+        function loadNextVideo(playerId, nextIndex) {
+            document.getElementById('nextVideoLoader').style.display = 'block';
+            window.location.href = `/video/${playerId}/${nextIndex}`;
+        }
+
+        // Preload next video if it exists
+        {% if home_runs|length > 1 %}
+            const nextVideo = document.createElement('video');
+            nextVideo.preload = 'auto';
+            nextVideo.src = '{{ home_runs[1].video }}';
+        {% endif %}
+        function onVideoLoaded() {
+            console.log('Video loaded successfully');
+            const videoContainer = event.target.closest('.video-container');
+            const errorMessage = videoContainer.querySelector('.error-message');
+            if (errorMessage) {
+                errorMessage.style.display = 'none';
+            }
+            document.getElementById('videoLoader').style.display = 'none';
+            videoContainer.style.display = 'block';
+        }
+
+        function onVideoError() {
+            console.log('Video failed to load');
+            const videoContainer = event.target.closest('.video-container');
+            const errorMessage = videoContainer.querySelector('.error-message');
+            if (errorMessage) {
+                errorMessage.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

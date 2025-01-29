@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Player Stats - {{ player.fullName }}</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 20px;
+        }
+        .stats-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        .player-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .player-details-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .player-image {
+            text-align: center;
+        }
+        .player-headshot {
+            width: 170px;
+            height: auto;
+            margin-bottom: 10px;
+        }
+        .player-info {
+            color: #666;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+        .details {
+            padding: 20px;
+        }
+        .stats {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .stat-label {
+            font-weight: bold;
+            color: #002D72;
+        }
+        .stat-value {
+            color: #D50032;
+            font-weight: bold;
+        }
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        .stats-table th {
+            background-color: #002D72;
+            color: white;
+            padding: 8px;
+            text-align: left;
+            font-weight: normal;
+        }
+        .stats-table td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        .stats-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .back-button {
+            display: block;
+            width: 100px;
+            margin: 20px auto;
+            padding: 10px;
+            background: #002D72;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .section-header {
+            margin-top: 30px;
+            color: #002D72;
+            border-bottom: 2px solid #D50032;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="stats-container">
+        <div class="player-details-container">
+            <div class="player-image">
+                <img src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/{{ player.id }}/headshot/67/current" 
+                     alt="{{ player.fullName }}" 
+                     class="player-headshot">
+                <h3>{{ player.fullName }} {{ '#' + player.primaryNumber if player.primaryNumber else '' }}</h3>
+                <div class="player-info">{{ player.team if player.team else player.currentTeam.name if player.currentTeam else 'N/A' }}, {{ player.position if player.position else player.primaryPosition.name if player.primaryPosition else 'N/A' }}</div>
+            </div>
+            <div class="details" style="padding-top: 0;">
+                <h3 style="margin-top: 0;">Player Details</h3>
+                <div class="stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Nickname</span>
+                        <span class="stat-value">{{ player.nickName if player.nickName else 'N/A' }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Bats</span>
+                        <span class="stat-value">{{ player.batSide.description if player.batSide else 'N/A' }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Throws</span>
+                        <span class="stat-value">{{ player.pitchHand.description if player.pitchHand else 'N/A' }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Height</span>
+                        <span class="stat-value">{{ player.height if player.height else 'N/A' }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Weight</span>
+                        <span class="stat-value">{{ player.weight if player.weight else 'N/A' }} lbs</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Birthdate</span>
+                        <span class="stat-value">{{ player.birthDate if player.birthDate else 'N/A' }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Birth Location</span>
+                        <span class="stat-value">{{ player.birthCity if player.birthCity else 'N/A' }}, {{ player.birthStateProvince if player.birthStateProvince else '' }} {{ player.birthCountry if player.birthCountry else '' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if stats_by_year.get('career', {}).get('fielding') %}
+        <h2 class="section-header">Fielding Statistics</h2>
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>Season</th>
+                    <th>Team</th>
+                    <th>LG</th>
+                    <th>POS</th>
+                    <th>G</th>
+                    <th>GS</th>
+                    <th>INN</th>
+                    <th>TC</th>
+                    <th>PO</th>
+                    <th>A</th>
+                    <th>E</th>
+                    <th>DP</th>
+                    <th>Fielding %</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# {% if stats_by_year.career.fielding.stat %}
+                <tr>
+                    <td>Career</td>
+                    <td>{{ player.team if player.team else player.currentTeam.name if player.currentTeam else 'MLB' }}</td>
+                    <td>{% set al_teams = ['Boston Red Sox', 'New York Yankees', 'Tampa Bay Rays', 'Toronto Blue Jays', 'Baltimore Orioles', 'Chicago White Sox', 'Cleveland Guardians', 'Detroit Tigers', 'Kansas City Royals', 'Minnesota Twins', 'Houston Astros', 'Los Angeles Angels', 'Oakland Athletics', 'Seattle Mariners', 'Texas Rangers'] %}{% set current_league = 'American League' if player.team in al_teams else stats_by_year.career.fielding.league.name if stats_by_year.career.fielding.league else 'MLB' %}{{ current_league }}</td>
+                    <td>{{ stats_by_year.career.fielding.position.abbreviation if stats_by_year.career.fielding.position else 'N/A' }}</td>
+                    <td>{{ stats_by_year.career.fielding.stat.games if stats_by_year.career.fielding.stat.games else '--' }}</td>
+                    <td>{{ stats_by_year.career.fielding.stat.gamesStarted if stats_by_year.career.fielding.stat.gamesStarted else '--' }}</td>
+                    <td>{{ "%.1f"|format(stats_by_year.career.fielding.stat.innings|float) if stats_by_year.career.fielding.stat.innings else '--' }}</td>
+                    <td>{{ stats_by_year.career.fielding.stat.chances if stats_by_year.career.fielding.stat.chances else '--' }}</td>
+                    <td>{{ stats_by_year.career.fielding.stat.putOuts if stats_by_year.career.fielding.stat.putOuts else '--' }}</td>
+                    <td>{{ stats_by_year.career.fielding.stat.assists if stats_by_year.career.fielding.stat.assists else '--' }}</td>
+                    <td>{{ stats_by_year.career.fielding.stat.errors if stats_by_year.career.fielding.stat.errors else '--' }}</td>
+                    <td>{{ stats_by_year.career.fielding.stat.doublePlays if stats_by_year.career.fielding.stat.doublePlays else '--' }}</td>
+                    <td>{{ "%.3f"|format(stats_by_year.career.fielding.stat.fielding|float) if stats_by_year.career.fielding.stat.fielding else '--' }}</td>
+                </tr>
+                {% endif %} #}
+                {% if stats_by_year.career.fielding.seasons %}
+                    {% for season in stats_by_year.career.fielding.seasons|sort(attribute='season', reverse=true) %}
+                    <tr>
+                        <td>{{ season.season }}</td>
+                        <td>{{ season.team.name if season.team else '--' }}</td>
+                        <td>{{ season.league.name if season.league else '--' }}</td>
+                        <td>{{ season.position.abbreviation if season.position else 'N/A' }}</td>
+                        <td>{{ season.stat.games if season.stat.games else '--' }}</td>
+                        <td>{{ season.stat.gamesStarted if season.stat.gamesStarted else '--' }}</td>
+                        <td>{{ "%.1f"|format(season.stat.innings|float) if season.stat.innings else '--' }}</td>
+                        <td>{{ season.stat.chances if season.stat.chances else '--' }}</td>
+                        <td>{{ season.stat.putOuts if season.stat.putOuts else '--' }}</td>
+                        <td>{{ season.stat.assists if season.stat.assists else '--' }}</td>
+                        <td>{{ season.stat.errors if season.stat.errors else '--' }}</td>
+                        <td>{{ season.stat.doublePlays if season.stat.doublePlays else '--' }}</td>
+                        <td>{{ "%.3f"|format(season.stat.fielding|float) if season.stat.fielding else '--' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if stats_by_year.get('career', {}).get('hitting') %}
+        <h2 class="section-header">Batting Statistics</h2>
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>Season</th>
+                    <th>Team</th>
+                    <th>LG</th>
+                    <th>G</th>
+                    <th>AB</th>
+                    <th>R</th>
+                    <th>H</th>
+                    <th>2B</th>
+                    <th>3B</th>
+                    <th>HR</th>
+                    <th>RBI</th>
+                    <th>BB</th>
+                    <th>SO</th>
+                    <th>AVG</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# {% if stats_by_year.career.hitting.stat %}
+                <tr class="career-row">
+                    <td><strong>Career</strong></td>
+                    <td>{{ player.team if player.team else player.currentTeam.name if player.currentTeam else 'MLB' }}</td>
+                    <td>MLB</td>
+                    <td>{{ stats_by_year.career.hitting.stat.gamesPlayed if stats_by_year.career.hitting.stat.gamesPlayed else '--' }}</td>
+                    <td>{{ stats_by_year.career.hitting.stat.atBats if stats_by_year.career.hitting.stat.atBats else '--' }}</td>
+                    <td>{{ stats_by_year.career.hitting.stat.runs if stats_by_year.career.hitting.stat.runs else '--' }}</td>
+                    <td>{{ stats_by_year.career.hitting.stat.hits if stats_by_year.career.hitting.stat.hits else '--' }}</td>
+                    <td>{{ stats_by_year.career.hitting.stat.doubles if stats_by_year.career.hitting.stat.doubles else '--' }}</td>
+                    <td>{{ stats_by_year.career.hitting.stat.triples if stats_by_year.career.hitting.stat.triples else '--' }}</td>
+                    <td>{{ stats_by_year.career.hitting.stat.homeRuns if stats_by_year.career.hitting.stat.homeRuns else '--' }}</td>
+                    <td>{{ stats_by_year.career.hitting.stat.rbi if stats_by_year.career.hitting.stat.rbi else '--' }}</td>
+                    <td>{{ stats_by_year.career.hitting.stat.baseOnBalls if stats_by_year.career.hitting.stat.baseOnBalls else '--' }}</td>
+                    <td>{{ stats_by_year.career.hitting.stat.strikeOuts if stats_by_year.career.hitting.stat.strikeOuts else '--' }}</td>
+                    <td>{{ "%.3f"|format(stats_by_year.career.hitting.stat.avg|float) if stats_by_year.career.hitting.stat.avg else '--' }}</td>
+                </tr>
+                {% endif %} #}
+                {% if stats_by_year.career.hitting.seasons %}
+                    {% for season in stats_by_year.career.hitting.seasons|sort(attribute='season', reverse=true) %}
+                    <tr>
+                        <td>{{ season.season }}</td>
+                        <td>{{ season.team.name if season.team else 'N/A' }}</td>
+                        <td>{{ season.league.name if season.league else 'N/A' }}</td>
+                        <td>{{ season.stat.gamesPlayed if season.stat.gamesPlayed else '--' }}</td>
+                        <td>{{ season.stat.atBats if season.stat.atBats else '--' }}</td>
+                        <td>{{ season.stat.runs if season.stat.runs else '--' }}</td>
+                        <td>{{ season.stat.hits if season.stat.hits else '--' }}</td>
+                        <td>{{ season.stat.doubles if season.stat.doubles else '--' }}</td>
+                        <td>{{ season.stat.triples if season.stat.triples else '--' }}</td>
+                        <td>{{ season.stat.homeRuns if season.stat.homeRuns else '--' }}</td>
+                        <td>{{ season.stat.rbi if season.stat.rbi else '--' }}</td>
+                        <td>{{ season.stat.baseOnBalls if season.stat.baseOnBalls else '--' }}</td>
+                        <td>{{ season.stat.strikeOuts if season.stat.strikeOuts else '--' }}</td>
+                        <td>{{ "%.3f"|format(season.stat.avg|float) if season.stat.avg else '--' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        {% if stats_by_year.get('career', {}).get('pitching') %}
+        <h2 class="section-header">Pitching Statistics</h2>
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>Season</th>
+                    <th>Team</th>
+                    <th>LG</th>
+                    <th>W</th>
+                    <th>L</th>
+                    <th>ERA</th>
+                    <th>G</th>
+                    <th>GS</th>
+                    <th>SV</th>
+                    <th>IP</th>
+                    <th>H</th>
+                    <th>ER</th>
+                    <th>BB</th>
+                    <th>SO</th>
+                    <th>WHIP</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# {% if stats_by_year.career.pitching.stat %}
+                <tr>
+                    <td>Career</td>
+                    <td>{{ player.team if player.team else player.currentTeam.name if player.currentTeam else 'MLB' }}</td>
+                    <td>{% set nl_teams = ['Los Angeles Dodgers', 'Arizona Diamondbacks', 'Atlanta Braves', 'Chicago Cubs', 'Cincinnati Reds', 'Colorado Rockies', 'Miami Marlins', 'Milwaukee Brewers', 'New York Mets', 'Philadelphia Phillies', 'Pittsburgh Pirates', 'San Diego Padres', 'San Francisco Giants', 'St. Louis Cardinals', 'Washington Nationals'] %}{% set current_league = 'NL' if player.team in nl_teams else stats_by_year.career.pitching.league.name if stats_by_year.career.pitching.league else 'MLB' %}{{ current_league }}</td>
+                    <td>{{ stats_by_year.career.pitching.stat.wins if stats_by_year.career.pitching.stat.wins else '--' }}</td>
+                    <td>{{ stats_by_year.career.pitching.stat.losses if stats_by_year.career.pitching.stat.losses else '--' }}</td>
+                    <td>{{ "%.2f"|format(stats_by_year.career.pitching.stat.era|float) if stats_by_year.career.pitching.stat.era else '--' }}</td>
+                    <td>{{ stats_by_year.career.pitching.stat.gamesPlayed if stats_by_year.career.pitching.stat.gamesPlayed else '--' }}</td>
+                    <td>{{ stats_by_year.career.pitching.stat.gamesStarted if stats_by_year.career.pitching.stat.gamesStarted else '--' }}</td>
+                    <td>{{ stats_by_year.career.pitching.stat.saves if stats_by_year.career.pitching.stat.saves else '--' }}</td>
+                    <td>{{ "%.1f"|format(stats_by_year.career.pitching.stat.inningsPitched|float) if stats_by_year.career.pitching.stat.inningsPitched else '--' }}</td>
+                    <td>{{ stats_by_year.career.pitching.stat.hits if stats_by_year.career.pitching.stat.hits else '--' }}</td>
+                    <td>{{ stats_by_year.career.pitching.stat.earnedRuns if stats_by_year.career.pitching.stat.earnedRuns else '--' }}</td>
+                    <td>{{ stats_by_year.career.pitching.stat.baseOnBalls if stats_by_year.career.pitching.stat.baseOnBalls else '--' }}</td>
+                    <td>{{ stats_by_year.career.pitching.stat.strikeOuts if stats_by_year.career.pitching.stat.strikeOuts else '--' }}</td>
+                    <td>{{ "%.2f"|format(stats_by_year.career.pitching.stat.whip|float) if stats_by_year.career.pitching.stat.whip else '--' }}</td>
+                </tr>
+                {% endif %} #}
+                {% if stats_by_year.career.pitching.seasons %}
+                    {% for season in stats_by_year.career.pitching.seasons|sort(attribute='season', reverse=true) %}
+                    <tr>
+                        <td>{{ season.season }}</td>
+                        <td>{{ season.team.name if season.team else 'N/A' }}</td>
+                        <td>{{ season.league.name if season.league else 'N/A' }}</td>
+                        <td>{{ season.stat.wins if season.stat.wins else '--' }}</td>
+                        <td>{{ season.stat.losses if season.stat.losses else '--' }}</td>
+                        <td>{{ "%.2f"|format(season.stat.era|float) if season.stat.era else '--' }}</td>
+                        <td>{{ season.stat.gamesPlayed if season.stat.gamesPlayed else '--' }}</td>
+                        <td>{{ season.stat.gamesStarted if season.stat.gamesStarted else '--' }}</td>
+                        <td>{{ season.stat.saves if season.stat.saves else '--' }}</td>
+                        <td>{{ "%.1f"|format(season.stat.inningsPitched|float) if season.stat.inningsPitched else '--' }}</td>
+                        <td>{{ season.stat.hits if season.stat.hits else '--' }}</td>
+                        <td>{{ season.stat.earnedRuns if season.stat.earnedRuns else '--' }}</td>
+                        <td>{{ season.stat.baseOnBalls if season.stat.baseOnBalls else '--' }}</td>
+                        <td>{{ season.stat.strikeOuts if season.stat.strikeOuts else '--' }}</td>
+                        <td>{{ "%.2f"|format(season.stat.whip|float) if season.stat.whip else '--' }}</td>
+                    </tr>
+                    {% endfor %}
+                {% endif %}
+            </tbody>
+        </table>
+        {% endif %}
+
+        <a href="/" class="back-button">Back Home</a>
+    </div>
+</body>
+</html>
