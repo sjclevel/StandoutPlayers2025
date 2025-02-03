@@ -616,12 +616,11 @@ def get_player_id(player_name):
         return None
 
 
-def analyze_video(video_url, player_name, homer_data):
+def analyze_video(player_name, homer_data):
     try:
         model = init_gemini()
-
-        # Extract game ID from video URL
-        game_id = video_url.split('/')[-1].split('-')[0]
+        video_url = homer_data.get('video', '')
+        game_id = video_url.split('/')[-1].split('-')[0] if video_url else ''
 
         # Initialize default values
         home_team = 'Home Team'
@@ -773,8 +772,25 @@ def get_analysis(player_id, video_index):
             print("Loading analysis from cache")
         else:
             # Generate new analysis
-            analysis_result = analyze_video(current_homer['video'],
-                                            player_name, current_homer)
+            print("\n=== Analysis Request Debug ===")
+            print(f"Player Name: {player_name}")
+            print(f"Video Index: {video_index}")
+            print(f"Homer Data: {current_homer}")
+
+            if not current_homer or not isinstance(current_homer, dict):
+                print("Error: Invalid homer data structure")
+                return jsonify({'error': 'Invalid video data'}), 500
+
+            analysis_result = analyze_video(player_name, current_homer)
+            print(f"\nAnalysis Result: {analysis_result}")
+
+            if not analysis_result:
+                print("Error: Analysis returned None")
+                return jsonify({'html': '<p>Unable to analyze video at this time</p>'}), 200
+
+            if 'text' not in analysis_result:
+                print(f"Error: Missing text in analysis result: {analysis_result}")
+                return jsonify({'html': '<p>Analysis generated invalid results</p>'}), 200
             # Cache the result
             try:
                 cache_ref.set({

@@ -3,12 +3,19 @@ import requests
 
 
 def init_gemini(multimodal=False):
+    print("\n=== Initializing Gemini ===")
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
-        raise ValueError("GEMINI_API_KEY environment variable not set")
+        print("Error: GEMINI_API_KEY not found in environment variables")
+        return None
+    print("API key found")
 
-    import google.generativeai as genai
-    genai.configure(api_key=api_key)
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=api_key)
+    except ImportError as e:
+        print(f"Error importing google.generativeai: {e}")
+        return None
 
     if multimodal:
         generation_config = {
@@ -69,47 +76,159 @@ def get_player_info(player_id, season=None):
 
 
 def analyze_video(player_name, homer_data):
+    import logging
+    import sys
+
+    # Configure logging
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler('video_analysis.log')
+        ]
+    )
+
     try:
+        logging.info("\n=== Starting Video Analysis ===")
+        debug_print(f"Player Name: {player_name}")
+        debug_print(f"Homer Data Type: {type(homer_data)}")
+        debug_print(f"Homer Data Content: {homer_data}")
+
+        # Initialize Gemini model
+        print("\n=== Initializing Gemini Model ===")
         model = init_gemini()
+        if not model:
+            print("Error: Failed to initialize Gemini model")
+            return {
+                'text': "Error: Could not initialize Gemini model - check GEMINI_API_KEY",
+                'metrics': {
+                    'exit_velocity': 0,
+                    'estimated_distance': 0,
+                    'launch_angle': 0
+                }
+            }
+        print("Gemini model initialized successfully")
+
+        video_url = homer_data.get('video', '')
+        game_id = video_url.split('/')[-1].split('-')[0] if video_url else ''
+
+        # Initialize default values
+        home_team = 'Home Team'
+        away_team = 'Away Team'
+        home_score = 'N/A'
+        away_score = 'N/A'
+        inning = 'N/A'
+        inning_state = ''
+        inning_half = 'N/A'
+        outs = 'N/A'
+        count = 'N/A'
+        base_situation = 'unknown'
+
+        # Get detailed game data from MLB Stats API
+        game_data = {}
+        try:
+            # Get complete game data from boxscore endpoint
+            boxscore_url = f"https://statsapi.mlb.com/api/v1/game/{game_id}/boxscore"
+            response = requests.get(boxscore_url)
+            response.raise_for_status()
+            game_data = response.json()
+
+            home_team = game_data.get('teams', {}).get('home', {}).get('team', {}).get('name', 'Home Team')
+            away_team = game_data.get('teams', {}).get('away', {}).get('team', {}).get('name', 'Away Team')
+            home_score = game_data.get('teams', {}).get('home', {}).get('score', 'N/A')
+            away_score = game_data.get('teams', {}).get('away', {}).get('score', 'N/A')
+
+            # Extract inning information (simplified example)
+            linescore = game_data.get('linescore', {})
+            inning = linescore.get('currentInning', 'N/A')
+            inning_half = linescore.get('inningHalf', 'N/A')
+            outs = linescore.get('outs', 'N/A')
+
+            #Example of count data, needs adaptation based on actual data structure
+            count = linescore.get('balls', 'N/A') + '-' + linescore.get('strikes','N/A')
+
+
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching game information: {e}")
+        except Exception as e:
+            print(f"Error processing game data: {e}")
+
+
+        # Create analysis with metrics
+        metrics = {
+            'exit_velocity': float(homer_data.get('ExitVelocity', 0)),
+            'estimated_distance': float(homer_data.get('HitDistance', 0)),
+            'launch_angle': float(homer_data.get('LaunchAngle', 0))
+        }
 
         prompt = f"""
-        Please analyze this home run by {player_name} with these metrics:
+        You are an expert baseball analysis, analyzing this home run.
 
+        Home Run Details:
+        Batter: {player_name}
         Exit Velocity: {homer_data.get('ExitVelocity', 'N/A')} mph
         Hit Distance: {homer_data.get('HitDistance', 'N/A')} feet
         Launch Angle: {homer_data.get('LaunchAngle', 'N/A')}°
+        Description: {homer_data.get('title', 'N/A')}
 
-        Format your response in plain text with no special characters or markdown:
+        Game Context:
+        Home Team: {home_team}
+        Away Team: {away_team}
+        Home Score: {home_score}
+        Away Score: {away_score}
+        Inning: {inning}
+        Inning Half: {inning_half}
+        Outs: {outs}
+        Count: {count}
 
-        Example format:
-        Exit Velocity: This is an elite exit velocity that ranks in the 95th percentile...
-        Launch Angle: This launch angle is in the optimal range...
-        Hit Distance: The ball traveled an impressive distance...
+        Please analyze:
+        The technical aspects of the home run (exit velocity, launch angle, distance)
+        How these metrics compare to MLB averages (typical HR: 95-105 mph exit velo, 25-35° launch angle)
+        The context of the home run within the game (score, inning, situation)
         """
 
-        response = model.generate_content(prompt)
-        analysis_text = response.text.replace('*',
-                                              '').replace('**',
-                                                          '').replace('#', '')
+        try:
+            logging.info("\n=== Generating Analysis ===")
+            logging.info("Sending prompt to Gemini...")
+            logging.info("\n=== Sending Prompt to Gemini ===")
+            logging.info(f"Prompt length: {len(prompt)}")
+            logging.info("\n=== Sending Prompt ===")
+            logging.info(f"Prompt:\n{prompt}")
+            response = model.generate_content(prompt)
+            logging.info("\n=== Response Received ===")
+            logging.info(f"Raw Response: {response}")
+            analysis_text = response.text
+            debug_print(f"Analysis text length: {len(analysis_text)}")
+            debug_print("Analysis content preview:", analysis_text[:200] + "...")
+            debug_print("\n=== Analysis Complete ===")
 
-        return {
-            'text': analysis_text,
-            'metrics': {
-                'exit_velocity': float(homer_data.get('ExitVelocity', 0)),
-                'estimated_distance': float(homer_data.get('HitDistance', 0)),
-                'launch_angle': float(homer_data.get('LaunchAngle', 0))
+            return {'text': analysis_text, 'metrics': metrics}
+        except Exception as e:
+            import traceback
+            print("\n=== Analysis Error ===")
+            print(f"Error Type: {type(e).__name__}")
+            print(f"Error Message: {str(e)}")
+            print("Traceback:")
+            traceback.print_exc()
+            return {
+                'text': f"Error analyzing video: {str(e)}",
+                'metrics': {
+                    'exit_velocity': 0,
+                    'estimated_distance': 0,
+                    'launch_angle': 0
+                }
             }
-        }
     except Exception as e:
-        print(f"Error analyzing video: {e}")
+        print(f"An unexpected error occurred in analyze_video: {e}")
         return {
-            'text': "Error analyzing video",
-            'metrics': {
-                'exit_velocity': 0,
-                'estimated_distance': 0,
-                'launch_angle': 0
+                'text': f"An unexpected error occurred: {str(e)}",
+                'metrics': {
+                    'exit_velocity': 0,
+                    'estimated_distance': 0,
+                    'launch_angle': 0
+                }
             }
-        }
 
 
 def get_all_home_runs(player_name):
